@@ -1,37 +1,44 @@
 :root {
-	--looks-col: #1f005c;
-	--events-col: #765900;
-	--operators-col: #004200;
+	--looks-col: #311267;
+	--events-col: #755b00;
+	--operators-col: #255715;
 	--data-col: #703800;
-	--flag-col: #8fff8f;
+
+	--flag-col: #40972c;
+	--flag-outline: #255e0d;
 }
 
 body.light {
-	--looks-col: #9966ff;
-	--events-col: #ffbf00;
-	--operators-col: #59c059;
+	--looks-col: #9b60ff;
+	--events-col: #f5c000;
+	--operators-col: #69c14e;
 	--data-col: #ff8c1a;
-	--flag-col: #004200;
+
+	--flag-col: #60c04b;
+	--flag-outline: #529A32;
 }
 
 .block {
 	display: inline-flex;
 	align-items: center;
-	padding: 1px;
+	padding: 2px;
 	padding-left: 6px;
 	border-radius: 40px;
-	margin: 4px;
+	margin: 0;
 	font-size: 0.8rem;
 	color: var(--text-col);
-	border: 2px solid #00000020;
+	border: 1px solid #00000020;
 	font-family: Arial, Helvetica, sans-serif;
 	width: fit-content;
+	pointer-events: none;
+	-webkit-user-select: none;
+	user-select: none;
 
 	transition: 300ms ease;
 }
 
 .block * {
-	font-family: Arial, Helvetica, sans-serif;
+	font-family: inherit;
 }
 
 .stack {
@@ -40,25 +47,26 @@ body.light {
 }
 
 .dropdown {
-	margin: 0 12px;
-	min-width: 32px;
+	margin: 0 6px 0 12px;
+	min-width: 40px;
 	padding: 4px;
-	padding-right: 16px;
-	position: relative;
 	border: 1px solid #00000020;
+	border-radius: 6px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
 }
 
 .dropdown::after {
 	content: "\25BC";
 	font-size: 0.5rem;
-	position: absolute;
-	right: 4px;
+	margin-left: 4px;
 	top: calc(50% - 0.25rem);
 }
 
 .block.hat {
 	background: var(--events-col);
-	border-radius: 10px 10px 6px 6px;
+	border-radius: 10px 10px 4px 4px;
 	padding-top: 10px;
 	padding-bottom: 10px;
 	padding-left: 6px;
@@ -70,6 +78,7 @@ body.light {
 	color: var(--flag-col);
 	font-family: "Font Awesome 7 Free";
 	font-weight: 900; /* REQUIRED FOR FA SOLID */
+	-webkit-text-stroke: 1px var(--flag-outline);
 }
 
 .block.hat.flag::before {
@@ -78,6 +87,7 @@ body.light {
 	content: "when ";
 	color: var(--text-col);
 	margin-right: 0.5rem;
+	-webkit-text-stroke: 0;
 }
 
 .block.hat.flag::after {
@@ -86,6 +96,7 @@ body.light {
 	content: " clicked";
 	color: var(--text-col);
 	margin-left: 0.5rem;
+	-webkit-text-stroke: 0;
 }
 
 .block.say {
@@ -93,6 +104,13 @@ body.light {
 	border-radius: 4px;
 	margin: 0;
 	width: fit-content;
+}
+
+.block.say > .input,
+.block.say > .operator,
+.block.data > .input,
+.block.data > .operator {
+	margin-left: 8px;
 }
 
 .block.data {
@@ -104,16 +122,20 @@ body.light {
 
 .block.operator {
 	background: var(--operators-col); /* Scratch green */
-	padding-left: 1px;
+	padding: 2px;
 	border: 1px solid #00000020;
+	display: flex;
+	gap: 4px;
+	margin: 0;
 }
 
 .block.number {
-	background: var(--secondary-col);
+	background: var(--bg-col);
 	color: var(--text-col);
 	border: 1px solid hsl(from var(--text-col) h s l / 0.2);
-	border-radius: 10px;
-	padding: 3px 9px;
+	border-radius: 15px;
+	padding: 4px 10px;
+	margin: 0;
 }
 
 .block.input {
