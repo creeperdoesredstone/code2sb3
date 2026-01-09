@@ -2,12 +2,16 @@
 	--looks-col: #1f005c;
 	--events-col: #765900;
 	--operators-col: #004200;
+	--data-col: #703800;
+	--flag-col: #8fff8f;
 }
 
 body.light {
 	--looks-col: #9966ff;
 	--events-col: #ffbf00;
 	--operators-col: #59c059;
+	--data-col: #ff8c1a;
+	--flag-col: #004200;
 }
 
 .block {
@@ -22,6 +26,8 @@ body.light {
 	border: 2px solid #00000020;
 	font-family: Arial, Helvetica, sans-serif;
 	width: fit-content;
+
+	transition: 300ms ease;
 }
 
 .block * {
@@ -31,6 +37,23 @@ body.light {
 .stack {
 	display: flex;
 	flex-direction: column;
+}
+
+.dropdown {
+	margin: 0 12px;
+	min-width: 32px;
+	padding: 4px;
+	padding-right: 16px;
+	position: relative;
+	border: 1px solid #00000020;
+}
+
+.dropdown::after {
+	content: "\25BC";
+	font-size: 0.5rem;
+	position: absolute;
+	right: 4px;
+	top: calc(50% - 0.25rem);
 }
 
 .block.hat {
@@ -43,12 +66,37 @@ body.light {
 	margin: 0;
 }
 
+.block.hat.flag {
+	color: var(--flag-col);
+	font-family: "Font Awesome 7 Free";
+	font-weight: 900; /* REQUIRED FOR FA SOLID */
+}
+
 .block.hat.flag::before {
-	content: "when 🚩 clicked";
+	font-family: Arial, Helvetica, sans-serif;
+	font-weight: 100;
+	content: "when ";
+	color: var(--text-col);
+	margin-right: 0.5rem;
+}
+
+.block.hat.flag::after {
+	font-family: Arial, Helvetica, sans-serif;
+	font-weight: 100;
+	content: " clicked";
+	color: var(--text-col);
+	margin-left: 0.5rem;
 }
 
 .block.say {
 	background: var(--looks-col);
+	border-radius: 4px;
+	margin: 0;
+	width: fit-content;
+}
+
+.block.data {
+	background: var(--data-col);
 	border-radius: 4px;
 	margin: 0;
 	width: fit-content;
