@@ -1,0 +1,294 @@
+:root {
+	--bg-col: #000;
+	--secondary-col: #222;
+	--tertiary-col: #111;
+	--text-col: #fff;
+	--primary-col: #08f;
+	--primary-accent: color-mix(in srgb, var(--primary-col) 80%, black);
+	--primary-accent: hsl(from var(--primary-col) calc(h + 20) s calc(l - 15));
+}
+
+* {
+	margin: 0;
+	padding: 0;
+	box-sizing: border-box;
+	font-family: "Fira Code", monospace;
+	color: var(--text-col);
+}
+
+*:focus {
+	outline: none;
+}
+
+body {
+	width: 100vw;
+	min-height: 100vh;
+	background-color: var(--bg-col);
+	color: var(--text-col);
+	caret-color: var(--primary-col);
+	padding: 16px;
+
+	display: flex;
+	justify-content: space-around;
+	flex-wrap: wrap;
+}
+
+body.light {
+	--bg-col: #fff;
+	--secondary-col: #ddd;
+	--tertiary-col: #eee;
+	--text-col: #000;
+	--primary-col: #fa0;
+	--primary-accent: hsl(from var(--primary-col) calc(h + 20) s calc(l - 10));
+}
+
+.container {
+	width: min(600px, 80%);
+	height: 400px;
+
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+	margin-bottom: 10px;
+}
+
+nav {
+	width: 100%;
+	display: flex;
+	align-items: center;
+	justify-content: flex-start;
+	padding-left: 12px;
+	gap: 16px;
+	position: relative;
+	top: 0;
+	margin-bottom: 16px;
+}
+
+nav span {
+	margin-left: -12px;
+	opacity: 0.5;
+}
+
+#inp-project-name {
+	height: 50px;
+	width: 250px;
+	background-color: var(--tertiary-col);
+	padding: 16px;
+	color: var(--text-col);
+	border-radius: 6px;
+	border: 1px solid var(--secondary-col);
+}
+
+button {
+	width: 50px;
+	height: 50px;
+	font-size: 1rem;
+	font-weight: 900;
+	border-radius: 6px;
+	border: none;
+	flex-grow: 0;
+	flex-shrink: 0;
+	background: var(--secondary-col);
+	transition: 300ms ease;
+	cursor: pointer;
+}
+
+button:hover {
+	background-color: var(--text-col);
+	color: var(--bg-col);
+}
+
+button i {
+	color: inherit;
+}
+
+.btn-action {
+	width: 150px;
+	cursor: pointer;
+
+	background: var(--secondary-col);
+	color: var(--text-col);
+
+	position: relative;
+	overflow: hidden;
+}
+
+.btn-action span {
+	position: relative;
+	display: inline-block; /* FIX */
+	opacity: 0.7;
+	transition: 300ms ease;
+}
+
+.btn-action span::before {
+	content: "";
+	position: absolute;
+
+	font-family: "Font Awesome 7 Free";
+	font-weight: 900; /* REQUIRED FOR FA SOLID */
+	font-size: 1rem;
+
+	top: 50%;
+	left: -8rem;
+	transform: translateY(-50%);
+	opacity: 0.7;
+
+	transition: left 300ms ease;
+}
+
+.btn-action:hover span::before {
+	left: -2rem;
+}
+
+.btn-action:hover span {
+	color: var(--bg-col);
+	transform: translateX(1rem);
+	opacity: 1;
+}
+
+#btn-compile {
+	background: linear-gradient(
+		135deg,
+		var(--primary-col) 0%,
+		var(--primary-accent) 100%
+	);
+	background-size: 200% 200%;
+	background-position: 0 0;
+	transition: 300ms ease;
+}
+
+#btn-compile span::before {
+	content: "\f121"; /* code */
+}
+
+#btn-compile:hover span {
+	color: var(--text-col);
+	transform: translateX(1rem);
+	opacity: 1;
+}
+
+#btn-compile:hover {
+	background-position: 100% 100%;
+}
+
+#btn-compile:active {
+	background: var(--text-col);
+}
+
+#btn-compile:active *,
+#btn-compile:active span {
+	color: var(--bg-col);
+}
+
+#btn-export span::before {
+	content: "\f56e";
+}
+
+#btn-export:disabled {
+	pointer-events: none;
+	background-color: var(--tertiary-col);
+}
+
+#code {
+	width: 100%;
+	height: 100%;
+	background-color: var(--secondary-col);
+	border-radius: 6px;
+	padding: 16px;
+	white-space: pre-wrap;
+	word-wrap: break-word;
+	tab-size: 4;
+	position: relative;
+	z-index: 2;
+	background-color: transparent;
+	color: transparent;
+	caret-color: var(--primary-col);
+	overflow: auto;
+	resize: none;
+	margin: 0;
+	padding: 16px;
+	line-height: 24px !important;
+}
+
+#code:empty::before {
+	content: "Enter code here...";
+	color: var(--text-col);
+	opacity: 0.5;
+	pointer-events: none;
+}
+
+#code-wrapper {
+	position: relative;
+	height: 100%;
+	overflow: hidden;
+	border-radius: 6px;
+}
+
+#code::selection {
+	background-color: #0088ff4d;
+}
+
+#highlight-layer {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	z-index: 1;
+	pointer-events: none;
+	overflow: hidden;
+	white-space: pre;
+	word-wrap: break-word;
+	padding: 16px;
+	margin: 0;
+	border: inherit;
+	font-size: inherit;
+	font-family: inherit;
+	line-height: inherit;
+	letter-spacing: inherit;
+	line-height: 24px !important;
+}
+
+#highlight-layer code {
+	background: none !important;
+	white-space: pre;
+}
+
+#code * {
+	background: transparent !important;
+	color: transparent !important;
+}
+
+#workspace {
+	display: flex;
+	align-items: center;
+}
+
+#workspace-top {
+	width: 100%;
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	justify-content: space-between;
+}
+
+#workspace-top p {
+	color: var(--text-col);
+	opacity: 0.5;
+}
+
+#blocks {
+	width: 100%;
+	border-radius: 6px;
+	background-color: var(--tertiary-col);
+	padding: 8px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+@media screen and (max-width: 1232px) {
+	nav {
+		justify-content: center;
+	}
+}

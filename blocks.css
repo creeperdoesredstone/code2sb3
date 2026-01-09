@@ -1,0 +1,78 @@
+:root {
+	--looks-col: #1f005c;
+	--events-col: #765900;
+	--operators-col: #004200;
+}
+
+body.light {
+	--looks-col: #9966ff;
+	--events-col: #ffbf00;
+	--operators-col: #59c059;
+}
+
+.block {
+	display: inline-flex;
+	align-items: center;
+	padding: 1px;
+	padding-left: 6px;
+	border-radius: 40px;
+	margin: 4px;
+	font-size: 0.8rem;
+	color: var(--text-col);
+	border: 2px solid #00000020;
+	font-family: Arial, Helvetica, sans-serif;
+	width: fit-content;
+}
+
+.block * {
+	font-family: Arial, Helvetica, sans-serif;
+}
+
+.stack {
+	display: flex;
+	flex-direction: column;
+}
+
+.block.hat {
+	background: var(--events-col);
+	border-radius: 10px 10px 6px 6px;
+	padding-top: 10px;
+	padding-bottom: 10px;
+	padding-left: 6px;
+	padding-right: 6px;
+	margin: 0;
+}
+
+.block.hat.flag::before {
+	content: "when 🚩 clicked";
+}
+
+.block.say {
+	background: var(--looks-col);
+	border-radius: 4px;
+	margin: 0;
+	width: fit-content;
+}
+
+.block.operator {
+	background: var(--operators-col); /* Scratch green */
+	padding-left: 1px;
+	border: 1px solid #00000020;
+}
+
+.block.number {
+	background: var(--secondary-col);
+	color: var(--text-col);
+	border: 1px solid hsl(from var(--text-col) h s l / 0.2);
+	border-radius: 10px;
+	padding: 3px 9px;
+}
+
+.block.input {
+	margin: 0;
+}
+
+.block.unknown {
+	background: #999;
+	font-style: italic;
+}
