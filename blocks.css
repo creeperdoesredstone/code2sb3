@@ -79,6 +79,7 @@ body.light {
 	font-family: "Font Awesome 7 Free";
 	font-weight: 900; /* REQUIRED FOR FA SOLID */
 	-webkit-text-stroke: 1px var(--flag-outline);
+	text-stroke: 1px var(--flag-outline);
 }
 
 .block.hat.flag::before {
@@ -88,6 +89,7 @@ body.light {
 	color: var(--text-col);
 	margin-right: 0.5rem;
 	-webkit-text-stroke: 0;
+	text-stroke: 0;
 }
 
 .block.hat.flag::after {
@@ -97,6 +99,7 @@ body.light {
 	color: var(--text-col);
 	margin-left: 0.5rem;
 	-webkit-text-stroke: 0;
+	text-stroke: 0;
 }
 
 .block.say {
@@ -146,3 +149,4 @@ body.light {
 	background: #999;
 	font-style: italic;
 }
+
