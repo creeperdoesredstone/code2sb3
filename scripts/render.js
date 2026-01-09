@@ -16,17 +16,18 @@ function renderStack(blocks, startId) {
 	let currentId = startId;
 	while (currentId) {
 		container.appendChild(renderBlock(blocks, currentId));
-		currentId = blocks[currentId].next;
+		currentId = blocks[currentId]?.next;
 	}
 
 	return container;
 }
 
 function renderBlock(blocks, blockId) {
-	console.log(blockId);
-	const block = blocks[blockId];
+	const id = typeof blockId === "object" ? blockId[1] : blockId;
+	console.log(id);
+	const block = blocks[id];
 	if (!block) {
-		if (typeof blockId === "object" || block.value) {
+		if ([10, 4].includes(blockId[0])) {
 			return renderNumber(
 				typeof blockId === "object" ? blockId : [4, block.value]
 			);
@@ -34,7 +35,7 @@ function renderBlock(blocks, blockId) {
 		throw new Error(`Block not found: ${blockId}`);
 	}
 
-	if (typeof blockId === "object" || block.value) {
+	if (block.value) {
 		return renderNumber(
 			typeof blockId === "object" ? blockId : [4, block.value]
 		);
@@ -42,6 +43,10 @@ function renderBlock(blocks, blockId) {
 
 	if (block.opcode.startsWith("operator_")) {
 		return renderOperator(blocks, block);
+	}
+
+	if (block.opcode.startsWith("data")) {
+		return renderDatablock(blocks, block);
 	}
 
 	if (block.opcode === "event_whenflagclicked") {
@@ -58,6 +63,12 @@ function renderBlock(blocks, blockId) {
 function renderHat(type) {
 	const div = document.createElement("div");
 	div.className = "block hat " + type;
+
+	switch (type) {
+		case "flag":
+			div.innerText = "\uf024";
+	}
+
 	return div;
 }
 
@@ -70,6 +81,33 @@ function renderSay(ir, block) {
 	div.appendChild(label);
 
 	const msgId = block.inputs.MESSAGE[1];
+	const input = document.createElement("span");
+	input.className = "input";
+	input.appendChild(renderBlock(ir, msgId));
+	div.appendChild(input);
+
+	return div;
+}
+
+function renderDatablock(ir, block) {
+	console.log(ir);
+	const div = document.createElement("div");
+	div.className = "block data";
+
+	const label = document.createElement("span");
+	label.textContent = "set";
+	div.appendChild(label);
+
+	const varName = document.createElement("span");
+	varName.className = "dropdown";
+	varName.textContent = block.fields.VARIABLE[0];
+	div.appendChild(varName);
+
+	const to = document.createElement("span");
+	to.textContent = "to";
+	div.appendChild(to);
+
+	const msgId = block.inputs.VALUE[1];
 	const input = document.createElement("span");
 	input.className = "input";
 	input.appendChild(renderBlock(ir, msgId));

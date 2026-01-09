@@ -1,7 +1,7 @@
 import { Result, CompileError } from "./helper.js";
 
 const blocks = {};
-const symbols = {};
+const variables = {};
 
 function newId() {
 	return crypto.randomUUID();
@@ -42,6 +42,42 @@ function emitOperator(node, parentId) {
 	return res.success(id);
 }
 
+function emitDeclaration(node) {
+	const res = new Result();
+
+	// 1. Allocate variable ID
+	const varId = newId();
+
+	variables[varId] = [node.varName, 0];
+
+	// 4. OPTIONAL: emit initializer as a statement
+	if (node.value) {
+		const type = 1;
+		const valueId =
+			node.value.kind !== "number"
+				? res.register(emit(node.value))
+				: [10, String(node.value.value)];
+		if (res.error) return res;
+
+		const setId = newId();
+		blocks[setId] = {
+			opcode: "data_setvariableto",
+			inputs: {
+				VALUE: [type, valueId],
+			},
+			fields: {
+				VARIABLE: [node.varName, varId],
+			},
+			parent: null,
+			next: null,
+			shadow: false,
+			topLevel: false,
+		};
+
+		return res.success(setId);
+	}
+}
+
 function wrapInScript(exprRootId) {
 	const flagId = newId();
 	const sayId = newId();
@@ -62,17 +98,24 @@ function wrapInScript(exprRootId) {
 		exprRootId = [10, blocks[exprRootId].value];
 	}
 
-	blocks[sayId] = {
-		opcode: "looks_say",
-		inputs: {
-			MESSAGE: [1, exprRootId],
-		},
-		fields: {},
-		parent: flagId,
-		next: null,
-		shadow: false,
-		topLevel: false,
-	};
+	if (
+		blocks[exprRootId]?.opcode.startsWith("operator_") ||
+		(exprRootId[1] && exprRootId[0] === 10)
+	)
+		blocks[sayId] = {
+			opcode: "looks_say",
+			inputs: {
+				MESSAGE: [1, exprRootId],
+			},
+			fields: {},
+			parent: flagId,
+			next: null,
+			shadow: false,
+			topLevel: false,
+		};
+	else {
+		blocks[flagId].next = exprRootId;
+	}
 
 	// Set expression root parent
 	console.log(blocks[exprRootId]);
@@ -91,11 +134,7 @@ function emit(node, parentId) {
 			return emitOperator(node, parentId);
 
 		case node.opcode === "declaration":
-			const varId = newId();
-			const varValue = res.register(emit(node.value, varId));
-			if (res.error) return res;
-			symbols[varId] = [node.varName, varValue];
-			return res.success(varId);
+			return emitDeclaration(node);
 
 		default:
 			console.log(`Unknown AST node type: ${node.kind}`);

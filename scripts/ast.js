@@ -63,7 +63,7 @@ function validateNode(node, env) {
 					new CompileError(
 						node.startPos,
 						node.endPos,
-						`Symbol ${node.varName} is not defined.`
+						`Symbol ${node.value} is not defined.`
 					)
 				);
 			return res.success({
@@ -96,7 +96,7 @@ function validateNode(node, env) {
 			env.symbols[node.varName] = value;
 			return res.success({
 				opcode: "declaration",
-				name: node.varName,
+				varName: node.varName,
 				value: value,
 			});
 		default:
