@@ -7,30 +7,56 @@ function newId() {
 	return crypto.randomUUID();
 }
 
+function getVariableId(name) {
+	if (!variables[name]) {
+		variables[name] = crypto.randomUUID();
+	}
+	return variables[name];
+}
+
+function emitIdentifier(node) {
+	const varId = getVariableId(node.value);
+	// Format: [Type 12, Name, ID]
+	return [
+		[12, node.value, varId],
+		[4, ""],
+	];
+}
+
 function emitOperator(node, parentId) {
 	const id = newId();
 	const res = new Result();
 
-	let leftId, rightId;
-	if (node.inputs[0].kind === "number") {
-		leftId = [4, String(node.inputs[0].value)];
-	} else {
-		leftId = res.register(emit(node.inputs[0], id));
-		if (res.error) return res;
+	function emitInput(inpNode) {
+		let inpId;
+		const res = new Result();
+		if (inpNode.kind === "number") {
+			inpId = [4, String(inpNode.value)];
+		} else if (inpNode.kind === "identifier") {
+			inpId = emitIdentifier(inpNode);
+		} else {
+			inpId = res.register(emit(inpNode, id));
+			if (res.error) return res;
+		}
+		return res.success(inpId);
 	}
 
-	if (node.inputs[1].kind === "number") {
-		rightId = [4, String(node.inputs[1].value)];
-	} else {
-		rightId = res.register(emit(node.inputs[1], id));
-		if (res.error) return res;
-	}
+	const leftId = res.register(emitInput(node.inputs[0]));
+	if (res.error) return res;
+	const rightId = res.register(emitInput(node.inputs[1]));
+	if (res.error) return res;
 
 	blocks[id] = {
 		opcode: node.opcode,
 		inputs: {
-			NUM1: [1, leftId],
-			NUM2: [1, rightId],
+			NUM1:
+				leftId.length === 2 && leftId[0][0] === 12
+					? [3, leftId[0], leftId[1]]
+					: [1, leftId],
+			NUM2:
+				rightId.length === 2 && rightId[0][0] === 12
+					? [3, rightId[0], rightId[1]]
+					: [1, rightId],
 		},
 		fields: {},
 		parent: parentId,
@@ -44,26 +70,26 @@ function emitOperator(node, parentId) {
 
 function emitDeclaration(node) {
 	const res = new Result();
-
-	// 1. Allocate variable ID
 	const varId = newId();
 
 	variables[varId] = [node.varName, 0];
 
-	// 4. OPTIONAL: emit initializer as a statement
 	if (node.value) {
-		const type = 1;
 		const valueId =
 			node.value.kind !== "number"
 				? res.register(emit(node.value))
 				: [10, String(node.value.value)];
+		const type = valueId.length === 2 && valueId[0][0] === 12 ? 3 : 1;
 		if (res.error) return res;
 
 		const setId = newId();
 		blocks[setId] = {
 			opcode: "data_setvariableto",
 			inputs: {
-				VALUE: [type, valueId],
+				VALUE:
+					type === 1
+						? [type, valueId]
+						: [type, valueId[0], valueId[1]],
 			},
 			fields: {
 				VARIABLE: [node.varName, varId],
@@ -98,18 +124,24 @@ function wrapInScript() {
 
 function wrapInSay(exprRootId, parentId) {
 	const sayId = newId();
-	if (!blocks[exprRootId].opcode) {
+	if (blocks[exprRootId] && !("opcode" in blocks[exprRootId])) {
 		exprRootId = [10, blocks[exprRootId].value];
 	}
 
+	const type = exprRootId.length === 2 && exprRootId[0][0] === 12 ? 3 : 1;
+
 	if (
+		!blocks[exprRootId] ||
 		blocks[exprRootId]?.opcode.startsWith("operator_") ||
 		(exprRootId[1] && exprRootId[0] === 10)
 	) {
 		blocks[sayId] = {
 			opcode: "looks_say",
 			inputs: {
-				MESSAGE: [1, exprRootId],
+				MESSAGE:
+					type === 1
+						? [type, exprRootId]
+						: [type, exprRootId[0], exprRootId[1]],
 			},
 			fields: {},
 			parent: parentId,
@@ -132,7 +164,10 @@ function emit(node, parentId) {
 			blocks[numId] = { value: String(node.value) };
 			return res.success(numId);
 
-		case node.opcode.startsWith("operator_"):
+		case node.kind === "identifier":
+			return res.success(emitIdentifier(node));
+
+		case node.opcode?.startsWith("operator_"):
 			return emitOperator(node, parentId);
 
 		case node.opcode === "declaration":
@@ -143,7 +178,7 @@ function emit(node, parentId) {
 				new CompileError(
 					node.startPos,
 					node.endPos,
-					`Unknown AST node type: ${node.kind}`
+					`Unknown AST node type: ${node.kind ?? "<unk>"}`
 				)
 			);
 	}

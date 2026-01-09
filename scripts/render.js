@@ -26,12 +26,12 @@ function renderBlock(blocks, blockId) {
 	const id = typeof blockId === "object" ? blockId[1] : blockId;
 	const block = blocks[id];
 	if (!block) {
-		if ([10, 4].includes(blockId[0])) {
+		if ([10, 4, 12].includes(blockId[0])) {
 			return renderNumber(
 				typeof blockId === "object" ? blockId : [4, block.value]
 			);
 		}
-		throw new Error(`Block not found: ${blockId}`);
+		throw new Error(`Block not found: ${blockId ?? "Not found"}`);
 	}
 
 	if (block.value) {
@@ -137,7 +137,7 @@ function operatorLabel(opcode) {
 
 function renderNumber(block) {
 	const span = document.createElement("span");
-	span.className = "block number";
+	span.className = "block " + (block[0] !== 12 ? "number" : "var");
 	span.textContent = block[1];
 	return span;
 }

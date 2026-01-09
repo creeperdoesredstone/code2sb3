@@ -247,7 +247,29 @@ export function parse(tokens) {
 	}
 
 	function expr() {
-		return additive();
+		const res = new Result();
+		const left = res.register(additive());
+		if (res.error) return res;
+
+		if (currentTok.type === TT.ASGN) {
+			if (!(left instanceof Identifier))
+				return res.fail(
+					new InvalidSyntax(
+						left.startPos,
+						left.endPos,
+						"Expected an identifier before '='."
+					)
+				);
+			advance();
+			const value = res.register(expr());
+			if (res.error) return res;
+
+			return res.success(
+				new Assignment(left.startPos, value.endPos, left.value, value)
+			);
+		} else {
+			return res.success(left);
+		}
 	}
 
 	function additive() {
