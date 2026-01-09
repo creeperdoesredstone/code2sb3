@@ -1,0 +1,4 @@
+expr // math stuff for now
+// comment
+
+$var = value // declaration
