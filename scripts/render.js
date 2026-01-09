@@ -24,7 +24,6 @@ function renderStack(blocks, startId) {
 
 function renderBlock(blocks, blockId) {
 	const id = typeof blockId === "object" ? blockId[1] : blockId;
-	console.log(id);
 	const block = blocks[id];
 	if (!block) {
 		if ([10, 4].includes(blockId[0])) {
@@ -90,7 +89,6 @@ function renderSay(ir, block) {
 }
 
 function renderDatablock(ir, block) {
-	console.log(ir);
 	const div = document.createElement("div");
 	div.className = "block data";
 

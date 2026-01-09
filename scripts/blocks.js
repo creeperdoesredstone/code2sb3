@@ -78,22 +78,26 @@ function emitDeclaration(node) {
 	}
 }
 
-function wrapInScript(exprRootId) {
+function wrapInScript() {
 	const flagId = newId();
-	const sayId = newId();
 
 	blocks[flagId] = {
 		opcode: "event_whenflagclicked",
 		inputs: {},
 		fields: {},
 		parent: null,
-		next: sayId,
+		next: null,
 		shadow: false,
 		topLevel: true,
 		x: 100,
 		y: 100,
 	};
 
+	return flagId;
+}
+
+function wrapInSay(exprRootId, parentId) {
+	const sayId = newId();
 	if (!blocks[exprRootId].opcode) {
 		exprRootId = [10, blocks[exprRootId].value];
 	}
@@ -101,25 +105,23 @@ function wrapInScript(exprRootId) {
 	if (
 		blocks[exprRootId]?.opcode.startsWith("operator_") ||
 		(exprRootId[1] && exprRootId[0] === 10)
-	)
+	) {
 		blocks[sayId] = {
 			opcode: "looks_say",
 			inputs: {
 				MESSAGE: [1, exprRootId],
 			},
 			fields: {},
-			parent: flagId,
+			parent: parentId,
 			next: null,
 			shadow: false,
 			topLevel: false,
 		};
-	else {
-		blocks[flagId].next = exprRootId;
+		if (blocks[exprRootId]?.opcode) blocks[exprRootId].parent = sayId;
+		return sayId;
 	}
-
-	// Set expression root parent
-	console.log(blocks[exprRootId]);
-	if (blocks[exprRootId]?.opcode) blocks[exprRootId].parent = sayId;
+	blocks[parentId].next = exprRootId;
+	return exprRootId;
 }
 
 function emit(node, parentId) {
@@ -137,7 +139,6 @@ function emit(node, parentId) {
 			return emitDeclaration(node);
 
 		default:
-			console.log(`Unknown AST node type: ${node.kind}`);
 			return res.fail(
 				new CompileError(
 					node.startPos,
@@ -159,10 +160,20 @@ export function emitScratch(ast) {
 		return res.fail(new CompileError(null, null, "No AST provided"));
 	}
 
+	const flagId = wrapInScript();
+
 	exprRootId = res.register(emit(ast[0]));
 	if (res.error) return res;
-	console.log(blocks);
-	wrapInScript(exprRootId);
+	let lastBlockId = wrapInSay(exprRootId, flagId);
+	blocks[flagId].next = lastBlockId;
+
+	for (let i = 1; i < ast.length; i++) {
+		const currentBlockId = res.register(emit(ast[i]));
+		if (res.error) return res;
+		const currentWrapper = wrapInSay(currentBlockId, lastBlockId);
+		blocks[lastBlockId].next = currentWrapper;
+		lastBlockId = currentWrapper;
+	}
 
 	return res.success(blocks);
 }
