@@ -15,7 +15,7 @@ body.light {
 	--data-col: #ff8c1a;
 
 	--flag-col: #60c04b;
-	--flag-outline: #529A32;
+	--flag-outline: #529a32;
 }
 
 .block {
@@ -79,7 +79,6 @@ body.light {
 	font-family: "Font Awesome 7 Free";
 	font-weight: 900; /* REQUIRED FOR FA SOLID */
 	-webkit-text-stroke: 1px var(--flag-outline);
-	text-stroke: 1px var(--flag-outline);
 }
 
 .block.hat.flag::before {
@@ -89,7 +88,6 @@ body.light {
 	color: var(--text-col);
 	margin-right: 0.5rem;
 	-webkit-text-stroke: 0;
-	text-stroke: 0;
 }
 
 .block.hat.flag::after {
@@ -99,20 +97,23 @@ body.light {
 	color: var(--text-col);
 	margin-left: 0.5rem;
 	-webkit-text-stroke: 0;
-	text-stroke: 0;
 }
 
 .block.say {
 	background: var(--looks-col);
 	border-radius: 4px;
-	margin: 0;
 	width: fit-content;
 }
 
 .block.say > .input,
+.block.data > .input {
+	margin: 4px;
+	margin-left: 8px;
+}
+
 .block.say > .operator,
-.block.data > .input,
 .block.data > .operator {
+	margin: 0;
 	margin-left: 8px;
 }
 
@@ -149,4 +150,3 @@ body.light {
 	background: #999;
 	font-style: italic;
 }
-
