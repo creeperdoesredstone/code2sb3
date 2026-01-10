@@ -1,21 +1,33 @@
 import { Result, CompileError } from "./helper.js";
 
 const blocks = {};
-const variables = {};
+export const variables = {};
+
+const logicalOps = [
+	"operator_lt",
+	"operator_gt",
+	"operator_equals",
+	"operator_and",
+	"operator_or",
+];
 
 function newId() {
 	return crypto.randomUUID();
 }
 
 function getVariableId(name) {
-	if (!variables[name]) {
-		variables[name] = crypto.randomUUID();
+	for (const [key, value] of Object.entries(variables)) {
+		if (value[0] === name) return key;
 	}
-	return variables[name];
+
+	const newVarId = newId();
+	variables[newVarId] = [name, 0];
+	return newVarId;
 }
 
 function emitIdentifier(node) {
 	const varId = getVariableId(node.value);
+	console.log(varId);
 	// Format: [Type 12, Name, ID]
 	return [
 		[12, node.value, varId],
@@ -65,6 +77,18 @@ function emitOperator(node, parentId) {
 		topLevel: false,
 	};
 
+	if (logicalOps.includes(node.opcode))
+		blocks[id].inputs = {
+			OPERAND1:
+				leftId.length === 2 && leftId[0][0] === 12
+					? [3, leftId[0], leftId[1]]
+					: [1, leftId],
+			OPERAND2:
+				rightId.length === 2 && rightId[0][0] === 12
+					? [3, rightId[0], rightId[1]]
+					: [1, rightId],
+		};
+
 	return res.success(id);
 }
 
@@ -79,7 +103,7 @@ function emitDeclaration(node) {
 			node.value.kind !== "number"
 				? res.register(emit(node.value))
 				: [10, String(node.value.value)];
-		const type = valueId.length === 2 && valueId[0][0] === 12 ? 3 : 1;
+		const type = valueId?.length === 2 && valueId[0][0] === 12 ? 3 : 1;
 		if (res.error) return res;
 
 		const setId = newId();
@@ -102,6 +126,14 @@ function emitDeclaration(node) {
 
 		return res.success(setId);
 	}
+}
+
+function emitFor(node, parentId) {
+	const res = new Result();
+	const startAsgn = res.register(emit(node.startAsgn, parentId));
+	if (res.error) return res;
+
+	const repeatId = newId();
 }
 
 function wrapInScript() {
@@ -170,15 +202,21 @@ function emit(node, parentId) {
 		case node.opcode?.startsWith("operator_"):
 			return emitOperator(node, parentId);
 
+		case node.opcode === "assign":
 		case node.opcode === "declaration":
 			return emitDeclaration(node);
+
+		case node.opcode === "for":
+			return emitFor(node, parentId);
 
 		default:
 			return res.fail(
 				new CompileError(
 					node.startPos,
 					node.endPos,
-					`Unknown AST node type: ${node.kind ?? "<unk>"}`
+					`Unknown AST node type: ${
+						node.kind ?? node.opcode ?? "<unk>"
+					}`
 				)
 			);
 	}
@@ -186,7 +224,8 @@ function emit(node, parentId) {
 
 export function emitScratch(ast) {
 	const res = new Result();
-	Object.keys(blocks).forEach((k) => delete blocks[k]);
+	Object.keys(blocks).forEach((key) => delete blocks[key]);
+	Object.keys(variables).forEach((key) => delete variables[key]);
 
 	let exprRootId;
 

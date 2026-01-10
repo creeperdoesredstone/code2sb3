@@ -1,4 +1,13 @@
-import { Position, TT, Token, InvalidChar, Result } from "./helper.js";
+import {
+	Position,
+	TT,
+	Token,
+	InvalidChar,
+	ExpectedChar,
+	Result,
+} from "./helper.js";
+
+const keywords = ["for", "do", "endfor"];
 
 /**
  * Processes the file and returns an array of tokens.
@@ -49,15 +58,79 @@ export function lex(fn, ftxt) {
 				tokens.push(new Token(startPos, pos.copy(), TT.DECLARE));
 				advance();
 				break;
+			case currentChar === "<":
+				advance();
+				if (currentChar === "=") {
+					tokens.push(
+						new Token(startPos, pos.copy(), TT.OPERATOR, "<=")
+					);
+					advance();
+					break;
+				}
+				tokens.push(new Token(startPos, startPos, TT.OPERATOR, "<"));
+				break;
+			case currentChar === ">":
+				advance();
+				if (currentChar === "=") {
+					tokens.push(
+						new Token(startPos, pos.copy(), TT.OPERATOR, ">=")
+					);
+					advance();
+					break;
+				}
+				tokens.push(new Token(startPos, startPos, TT.OPERATOR, ">"));
+				break;
 			case currentChar === "=":
-				tokens.push(new Token(startPos, pos.copy(), TT.ASGN));
+				advance();
+				if (currentChar === "=") {
+					tokens.push(
+						new Token(startPos, pos.copy(), TT.OPERATOR, "==")
+					);
+					advance();
+					break;
+				}
+				tokens.push(new Token(startPos, startPos, TT.ASGN));
+				break;
+			case currentChar === "&":
+				advance();
+				if (currentChar !== "&")
+					return res.fail(
+						new ExpectedChar(
+							pos.copy(),
+							pos.copy(),
+							"'&' (after '&')"
+						)
+					);
+				tokens.push(new Token(startPos, pos.copy(), TT.OPERATOR, "&&"));
 				advance();
 				break;
-			case "+-*%".includes(currentChar):
+			case currentChar === "|":
+				advance();
+				if (currentChar !== "|")
+					return res.fail(
+						new ExpectedChar(
+							pos.copy(),
+							pos.copy(),
+							"'|' (after '|')"
+						)
+					);
+				tokens.push(new Token(startPos, pos.copy(), TT.OPERATOR, "||"));
+				advance();
+				break;
+			case "+*%".includes(currentChar):
 				tokens.push(
 					new Token(startPos, pos.copy(), TT.OPERATOR, currentChar)
 				);
 				advance();
+				break;
+			case currentChar === "-":
+				advance();
+				if (currentChar === ">") {
+					tokens.push(new Token(startPos, pos.copy(), TT.ARROW));
+					advance();
+					break;
+				}
+				tokens.push(new Token(startPos, startPos, TT.OPERATOR, "-"));
 				break;
 			case currentChar === "/":
 				advance();
@@ -95,7 +168,14 @@ export function lex(fn, ftxt) {
 					resStr += currentChar;
 					advance();
 				}
-				tokens.push(new Token(startPos, pos.copy(), TT.IDEN, resStr));
+				tokens.push(
+					new Token(
+						startPos,
+						pos.copy(),
+						keywords.includes(resStr) ? TT.KEYWORD : TT.IDEN,
+						resStr
+					)
+				);
 				break;
 			default:
 				return res.fail(

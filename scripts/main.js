@@ -32,7 +32,7 @@ function run() {
 compileBtn.addEventListener("click", () => {
 	const result = run();
 	if (!result) return;
-	console.log(result.error ? result.error.toString() : result.value);
+	console.log(result.error ? result.error : result.value);
 
 	if (!result.error) {
 		document.getElementById("btn-export").disabled = false;

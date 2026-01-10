@@ -1,3 +1,5 @@
+const logicalOps = ["<", ">", "=", "and", "or"];
+
 export function renderBlocks(blocks) {
 	const workspace = document.getElementById("blocks");
 	workspace.innerHTML = "";
@@ -119,7 +121,7 @@ function operatorLabel(opcode) {
 		case "operator_add":
 			return "+";
 		case "operator_subtract":
-			return "−";
+			return "-";
 		case "operator_multiply":
 			return "*";
 		case "operator_divide":
@@ -130,6 +132,10 @@ function operatorLabel(opcode) {
 			return ">";
 		case "operator_equals":
 			return "=";
+		case "operator_and":
+			return "and";
+		case "operator_or":
+			return "or";
 		default:
 			return opcode;
 	}
@@ -146,8 +152,8 @@ function renderOperator(ir, block) {
 	const div = document.createElement("div");
 	div.className = "block operator";
 
-	const leftId = block.inputs.NUM1[1];
-	const rightId = block.inputs.NUM2[1];
+	const leftId = block.inputs?.NUM1?.[1] ?? block.inputs?.OPERAND1?.[1];
+	const rightId = block.inputs?.NUM2?.[1] ?? block.inputs?.OPERAND2?.[1];
 
 	const left = document.createElement("span");
 	left.className = "input";
@@ -155,6 +161,8 @@ function renderOperator(ir, block) {
 
 	const label = document.createElement("span");
 	label.textContent = operatorLabel(block.opcode);
+
+	if (logicalOps.includes(label.textContent)) div.classList.add("logical");
 
 	const right = document.createElement("span");
 	right.className = "input";

@@ -101,6 +101,27 @@ export class BinOpNode extends Node {
 }
 
 /**
+ * A node holding a binary operation.
+ */
+export class UnaryOpNode extends Node {
+	/**
+	 * @param {Position} startPos - The node's start position.
+	 * @param {Position} endPos - The node's end position.
+	 * @param {Token} op - The node's operator.
+	 * @param {Node} value - The node's second operand.
+	 */
+	constructor(startPos, endPos, op, value) {
+		super(startPos, endPos);
+		this.op = op;
+		this.value = value;
+	}
+
+	toString() {
+		return `(${this.op}, ${this.right})`;
+	}
+}
+
+/**
  * A node holding a variable declaration.
  */
 export class VarDeclaration extends Node {
@@ -139,6 +160,27 @@ export class Assignment extends Node {
 
 	toString() {
 		return `(${this.varName} = ${this.value})`;
+	}
+}
+
+/**
+ * A node holding a for loop.
+ */
+export class ForLoop extends Node {
+	/**
+	 * @param {Position} startPos - The node's start position.
+	 * @param {Position} endPos - The node's end position.
+	 * @param {VarDeclaration|Assignment} startAsgnNode - The variable name.
+	 * @param {Node} endNode - The end value of the for loop.
+	 * @param {Node} stepNode - The step value of the for loop.
+	 * @param {Statements} body - The loop's body.
+	 */
+	constructor(startPos, endPos, startAsgnNode, endNode, stepNode, body) {
+		super(startPos, endPos);
+		this.startAsgnNode = startAsgnNode;
+		this.endNode = endNode;
+		this.stepNode = stepNode;
+		this.body = body;
 	}
 }
 
@@ -207,6 +249,10 @@ export function parse(tokens) {
 
 	function statement() {
 		if (currentTok.type === TT.KEYWORD) {
+			switch (currentTok.value) {
+				case "for":
+					return forLoop();
+			}
 		}
 		if (currentTok.type === TT.DECLARE) return declaration();
 		return expr();
@@ -246,9 +292,95 @@ export function parse(tokens) {
 		);
 	}
 
+	function forLoop() {
+		const res = new Result();
+		const startPos = currentTok.startPos;
+		advance();
+
+		const startAsgnNode = res.register(statement());
+		if (res.error) return res;
+
+		if (
+			!(
+				startAsgnNode instanceof VarDeclaration ||
+				startAsgnNode instanceof Assignment
+			)
+		)
+			return res.fail(
+				new InvalidSyntax(
+					startAsgnNode.startPos,
+					startAsgnNode.endPos,
+					"Expected a declaration or assignment after 'for' keyword."
+				)
+			);
+
+		if (currentTok.type !== TT.ARROW)
+			return res.fail(
+				new InvalidSyntax(
+					currentTok.startPos,
+					currentTok.endPos,
+					"Expected '->' after assignment or declaration."
+				)
+			);
+		advance();
+
+		const endNode = res.register(expr());
+		if (res.error) return res;
+
+		let stepNode = null;
+		if (currentTok.type === TT.KEYWORD && currentTok.value === "step") {
+			advance();
+			stepNode = res.register(expr());
+			if (res.error) return res;
+		}
+
+		if (!(currentTok.type === TT.KEYWORD && currentTok.value === "do"))
+			return res.fail(
+				new InvalidSyntax(
+					currentTok.startPos,
+					currentTok.endPos,
+					"Expected 'do' after end/step value."
+				)
+			);
+		advance();
+
+		const body = new Statements([]);
+		while (
+			currentTok.type !== TT.END &&
+			!(currentTok.type === TT.KEYWORD && currentTok.value === "endfor")
+		) {
+			stmt = res.register(statement());
+			if (res.error) return res;
+
+			body.statements.push(stmt);
+		}
+
+		if (!(currentTok.type === TT.KEYWORD && currentTok.value === "endfor"))
+			return res.fail(
+				new InvalidSyntax(
+					currentTok.startPos,
+					currentTok.endPos,
+					"Expected 'endfor' after for loop."
+				)
+			);
+		const endPos = currentTok.endPos;
+		advance();
+
+		return res.success(
+			new ForLoop(
+				startPos,
+				endPos,
+				startAsgnNode,
+				endNode,
+				stepNode,
+				body
+			)
+		);
+	}
+
 	function expr() {
 		const res = new Result();
-		const left = res.register(additive());
+		const left = res.register(logical());
 		if (res.error) return res;
 
 		if (currentTok.type === TT.ASGN) {
@@ -261,7 +393,7 @@ export function parse(tokens) {
 					)
 				);
 			advance();
-			const value = res.register(expr());
+			const value = res.register(logical());
 			if (res.error) return res;
 
 			return res.success(
@@ -270,6 +402,30 @@ export function parse(tokens) {
 		} else {
 			return res.success(left);
 		}
+	}
+
+	function logical() {
+		return binaryOp(
+			[
+				[TT.OPERATOR, "&&"],
+				[TT.OPERATOR, "||"],
+			],
+			comparison
+		);
+	}
+
+	function comparison() {
+		return binaryOp(
+			[
+				[TT.OPERATOR, "<"],
+				[TT.OPERATOR, ">"],
+				[TT.OPERATOR, "=="],
+				[TT.OPERATOR, "!="],
+				[TT.OPERATOR, "<="],
+				[TT.OPERATOR, ">="],
+			],
+			additive
+		);
 	}
 
 	function additive() {
@@ -289,8 +445,21 @@ export function parse(tokens) {
 				[TT.OPERATOR, "/"],
 				[TT.OPERATOR, "%"],
 			],
-			atom
+			unary
 		);
+	}
+
+	function unary() {
+		const res = new Result();
+		if (currentTok.type === TT.OPERATOR && "+-".includes(currentTok.value)) {
+			const op = currentTok;
+			advance();
+			const value = res.register(unary());
+			if (res.error) return res;
+
+			return res.success(new UnaryOpNode(op.startPos, value.endPos, op, value))
+		}
+		return atom();
 	}
 
 	function atom() {

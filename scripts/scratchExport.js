@@ -1,3 +1,5 @@
+import { variables } from "./blocks.js";
+
 function buildProjectJson(ir) {
 	const project = {
 		version: 3,
@@ -13,7 +15,7 @@ function buildProjectJson(ir) {
 			{
 				isStage: true,
 				name: "Stage",
-				variables: {},
+				variables: variables,
 				lists: {},
 				broadcasts: {},
 				blocks: ir,

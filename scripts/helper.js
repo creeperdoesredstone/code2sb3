@@ -9,7 +9,8 @@ const types = [
 	"LPR",
 	"RPR",
 	"DECLARE",
-	"ASGN"
+	"ASGN",
+	"ARROW",
 ];
 
 export const TT = Object.freeze(
@@ -171,9 +172,17 @@ export class BaseError {
 	}
 
 	toString() {
-		return `File ${this.startPos.fn}, line ${this.startPos.ln + 1} col ${
-			this.startPos.col + 1
-		}\n\n${this.name}: ${this.details}`;
+		return `File ${this.startPos.fn ?? "<sys>"}, line ${
+			(this.startPos.ln ?? -1) + 1
+		} col ${(this.startPos.ln ?? col) + 1}\n\n${this.name}: ${
+			this.details
+		}`;
+	}
+}
+
+export class ExpectedChar extends BaseError {
+	constructor(startPos, endPos, msg) {
+		super(startPos, endPos, "Expected Character", msg);
 	}
 }
 
