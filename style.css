@@ -239,6 +239,7 @@ button i {
 	overflow: hidden;
 	white-space: pre;
 	word-wrap: break-word;
+	word-break: break-all;
 	padding: 16px;
 	margin: 0;
 	border: inherit;
@@ -250,8 +251,12 @@ button i {
 }
 
 #highlight-layer code {
+	display: block;
+	width: 100%;
 	background: none !important;
-	white-space: pre;
+	white-space: pre-wrap;
+	overflow-wrap: anywhere;
+	word-wrap: break-word;
 }
 
 #code * {
@@ -285,6 +290,9 @@ button i {
 	display: flex;
 	align-items: center;
 	justify-content: center;
+	overflow-x: scroll;
+	-webkit-scrollbar-width: none;
+	scrollbar-width: none;
 }
 
 @media screen and (max-width: 1232px) {

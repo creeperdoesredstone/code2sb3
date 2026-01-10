@@ -1,11 +1,12 @@
 :root {
-	--looks-col: #311267;
-	--events-col: #755b00;
-	--operators-col: #255715;
-	--data-col: #703800;
+	--looks-col: #9b60ff;
+	--events-col: #f5c000;
+	--operators-col: #69c14e;
+	--data-col: #ff8c1a;
 
-	--flag-col: #40972c;
-	--flag-outline: #255e0d;
+	--flag-col: #60c04b;
+	--flag-outline: #529a32;
+	--label-col: #fff;
 }
 
 body.light {
@@ -26,8 +27,9 @@ body.light {
 	border-radius: 40px;
 	margin: 0;
 	font-size: 0.8rem;
-	color: var(--text-col);
+	color: var(--label-col);
 	border: 1px solid #00000020;
+	text-shadow: 0.5px 0.5px 0 #00000047;
 	font-family: Arial, Helvetica, sans-serif;
 	width: fit-content;
 	pointer-events: none;
@@ -39,6 +41,8 @@ body.light {
 
 .block * {
 	font-family: inherit;
+	color: inherit;
+	text-shadow: inherit;
 }
 
 .stack {
@@ -51,7 +55,7 @@ body.light {
 	min-width: 40px;
 	padding: 4px;
 	border: 1px solid #00000020;
-	border-radius: 6px;
+	border-radius: 3px;
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -67,8 +71,8 @@ body.light {
 .block.hat {
 	background: var(--events-col);
 	border-radius: 10px 10px 4px 4px;
-	padding-top: 10px;
-	padding-bottom: 10px;
+	padding-top: 14px;
+	padding-bottom: 6px;
 	padding-left: 6px;
 	padding-right: 6px;
 	margin: 0;
@@ -77,16 +81,18 @@ body.light {
 .block.hat.flag {
 	color: var(--flag-col);
 	font-family: "Font Awesome 7 Free";
-	font-weight: 900; /* REQUIRED FOR FA SOLID */
-	-webkit-text-stroke: 1px var(--flag-outline);
+	font-weight: 900;
+	-webkit-text-stroke: 0.6px var(--flag-outline);
+	text-shadow: none;
 }
 
 .block.hat.flag::before {
 	font-family: Arial, Helvetica, sans-serif;
 	font-weight: 100;
 	content: "when ";
-	color: var(--text-col);
+	color: var(--label-col);
 	margin-right: 0.5rem;
+	text-shadow: 0.5px 0.5px 0 #00000047;
 	-webkit-text-stroke: 0;
 }
 
@@ -94,8 +100,9 @@ body.light {
 	font-family: Arial, Helvetica, sans-serif;
 	font-weight: 100;
 	content: " clicked";
-	color: var(--text-col);
+	color: var(--label-col);
 	margin-left: 0.5rem;
+	text-shadow: 0.5px 0.5px 0 #00000047;
 	-webkit-text-stroke: 0;
 }
 
@@ -124,26 +131,129 @@ body.light {
 	width: fit-content;
 }
 
+.block.var {
+	background: var(--data-col);
+	padding: 4px 10px;
+	border-radius: 15px;
+}
+
 .block.operator {
-	background: var(--operators-col); /* Scratch green */
-	padding: 2px;
-	border: 1px solid #00000020;
 	display: flex;
 	gap: 4px;
 	margin: 0;
 }
 
+.block.operator:not(.logical) {
+	background: var(--operators-col);
+	border: 1px solid #00000020;
+	padding: 2px;
+}
+
+/* .logical {
+	border-style: solid;
+	border-width: 2px 15px;
+
+	border-image-source: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='40' viewBox='0 0 60 40'%3E%3Cpath d='M15 1 L45 1 L58.5 20 L45 39 L15 39 L1.5 20 Z' fill='%2369c14e' stroke='%2358a141' stroke-width='1'/%3E%3C/svg%3E");
+
+	border-image-slice: 1 15 fill;
+	border-image-repeat: stretch;
+
+	display: inline-flex;
+	align-items: center;
+	padding: 2px 0;
+	min-height: 32px;
+	background: none;
+
+	color: var(--label-col);
+	font-family: Arial, sans-serif;
+	font-size: 0.8rem;
+	text-shadow: 0.5px 0.5px 0 #00000047;
+} */
+
+.logical {
+	--slant: max(16px, 7%);
+	--bg-color: var(--operators-col);
+	--border-color: #58a141;
+
+	position: relative;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	padding: 2px 18px;
+	color: var(--label-col);
+	z-index: 1; /* Keeps text above the pseudo-element background */
+	min-height: 32px;
+	border-color: transparent;
+}
+
+.logical:has(.logical) {
+	padding: 2px;
+}
+
+.logical::after {
+	content: "";
+	position: absolute;
+	inset: 0;
+	z-index: -1;
+	background: var(--bg-color);
+
+	/* 1. The Mask: Creates 4 fixed 15px corner cuts that don't stretch */
+	/* This ensures the 'steepness' is always identical */
+	-webkit-mask: linear-gradient(135deg, transparent var(--slant), #000 0) top
+			left,
+		linear-gradient(-135deg, transparent var(--slant), #000 0) top right,
+		linear-gradient(45deg, transparent var(--slant), #000 0) bottom left,
+		linear-gradient(-45deg, transparent var(--slant), #000 0) bottom right;
+	-webkit-mask-size: 51% 51%;
+	-webkit-mask-repeat: no-repeat;
+
+	mask: linear-gradient(135deg, transparent var(--slant), #000 0) top left,
+		linear-gradient(-135deg, transparent var(--slant), #000 0) top right,
+		linear-gradient(45deg, transparent var(--slant), #000 0) bottom left,
+		linear-gradient(-45deg, transparent var(--slant), #000 0) bottom right;
+	mask-size: 51% 51%;
+	mask-repeat: no-repeat;
+
+	filter: drop-shadow(1px 0 0 #58a141) drop-shadow(-1px 0 0 #58a141)
+		drop-shadow(0 1px 0 #58a141) drop-shadow(0 -1px 0 #58a141);
+}
+
+.logical::before {
+	content: "";
+	position: absolute;
+	inset: -1px;
+	z-index: -1;
+	background-color: var(--border-color);
+	/* This mask is a slightly thicker version to create the 'stroke' effect */
+	-webkit-mask: linear-gradient(135deg, transparent var(--slant), #000 0) top
+			left,
+		linear-gradient(-135deg, transparent var(--slant), #000 0) top right,
+		linear-gradient(45deg, transparent var(--slant), #000 0) bottom left,
+		linear-gradient(-45deg, transparent var(--slant), #000 0) bottom right;
+	-webkit-mask-size: 51% 51%;
+	-webkit-mask-repeat: no-repeat;
+
+	mask: linear-gradient(135deg, transparent var(--slant), #000 0) top left,
+		linear-gradient(-135deg, transparent var(--slant), #000 0) top right,
+		linear-gradient(45deg, transparent var(--slant), #000 0) bottom left,
+		linear-gradient(-45deg, transparent var(--slant), #000 0) bottom right;
+	mask-size: 51% 51%;
+	mask-repeat: no-repeat;
+}
+
 .block.number {
-	background: var(--bg-col);
-	color: var(--text-col);
-	border: 1px solid hsl(from var(--text-col) h s l / 0.2);
+	background: white;
+	color: black;
+	border: 1px solid #00000047;
 	border-radius: 15px;
 	padding: 4px 10px;
 	margin: 0;
+	text-shadow: none;
 }
 
 .block.input {
 	margin: 0;
+	text-shadow: none;
 }
 
 .block.unknown {
