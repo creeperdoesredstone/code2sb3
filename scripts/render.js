@@ -1,180 +1,141 @@
-const logicalOps = ["<", ">", "=", "and", "or"];
+export function renderBlocks(blocksJSON) {
+	const container = document.getElementById("blocks");
+	container.innerHTML = ""; // Clear previous renders
 
-export function renderBlocks(blocks) {
-	const workspace = document.getElementById("blocks");
-	workspace.innerHTML = "";
+	// 1. Find the top-level block (the one with 'topLevel: true')
+	const topBlockId = Object.keys(blocksJSON).find(
+		(id) => blocksJSON[id].topLevel
+	);
 
-	for (const id in blocks) {
-		if (blocks[id].topLevel) {
-			workspace.appendChild(renderStack(blocks, id));
+	if (!topBlockId) return;
+
+	// 2. Convert JSON to scratchblocks text
+	const scratchText = blocksToText(topBlockId, blocksJSON);
+
+	// 3. Render it into the div
+	const doc = scratchblocks.parse(scratchText);
+	const svg = scratchblocks.render(doc, {
+		style: "scratch3",
+		scale: 1,
+	});
+
+	container.appendChild(svg);
+}
+
+function blocksToText(topBlockId, blocksJSON) {
+	const lines = [];
+	const seen = new Set();
+
+	const inputToText = (inp) => {
+		if (!inp) return "";
+		if (!Array.isArray(inp)) return String(inp);
+
+		const type = inp[0];
+
+		// literal value (e.g. [10, "5"])
+		if (type === 10) return String(inp[1] ?? "");
+
+		// normal input wrapper (e.g. [1, inner])
+		if (type === 1) {
+			const inner = inp[1];
+			if (!inner) return "";
+			if (typeof inner === "string" && blocksJSON[inner]) {
+				const b = blocksJSON[inner];
+				if (b.opcode && b.opcode.startsWith("operator_"))
+					return operatorToText(inner);
+				if ("value" in b) return String(b.value);
+				return b.opcode ?? "";
+			}
+			if (Array.isArray(inner)) {
+				// variable-like array [12, name, id] or similar
+				if (inner[0] === 12) return String(inner[1] ?? "");
+				return String(inner[1] ?? inner[0]);
+			}
+			return String(inner);
 		}
-	}
-}
 
-function renderStack(blocks, startId) {
-	const container = document.createElement("div");
-	container.className = "stack";
-
-	let currentId = startId;
-	while (currentId) {
-		container.appendChild(renderBlock(blocks, currentId));
-		currentId = blocks[currentId]?.next;
-	}
-
-	return container;
-}
-
-function renderBlock(blocks, blockId) {
-	const id = typeof blockId === "object" ? blockId[1] : blockId;
-	const block = blocks[id];
-	if (!block) {
-		if ([10, 4, 12].includes(blockId[0])) {
-			return renderNumber(
-				typeof blockId === "object" ? blockId : [4, block.value]
-			);
+		// variable reference (e.g. [3, [12,name,id], [4,""]])
+		if (type === 3) {
+			const maybeVar = inp[1];
+			if (Array.isArray(maybeVar) && maybeVar[0] === 12)
+				return String(maybeVar[1] ?? "");
+			return String(maybeVar ?? "");
 		}
-		throw new Error(`Block not found: ${blockId ?? "Not found"}`);
+
+		return String(inp[1] ?? "");
+	};
+
+	const processInput = (rawInput) => {
+		return "(<".includes(rawInput[0]) ? rawInput : `(${rawInput})`;
+	};
+
+	const operatorToText = (blockId) => {
+		const b = blocksJSON[blockId];
+		if (!b) return "";
+
+		const opMap = {
+			operator_add: "+",
+			operator_subtract: "-",
+			operator_multiply: "*",
+			operator_divide: "/",
+			operator_lt: "<",
+			operator_gt: ">",
+			operator_equals: "=",
+			operator_and: "and",
+			operator_or: "or",
+		};
+		const logicalOps = ["<", ">", "=", "and", "or"];
+		const sym = opMap[b.opcode] ?? b.opcode;
+
+		const leftInp = b.inputs?.NUM1 ?? b.inputs?.OPERAND1 ?? null;
+		const rightInp = b.inputs?.NUM2 ?? b.inputs?.OPERAND2 ?? null;
+
+		const left = processInput(inputToText(leftInp));
+		const right = processInput(inputToText(rightInp));
+
+		if (left === "" && right === "") return String(b.opcode);
+		const inputs = `${left} ${sym} ${right}`;
+		return logicalOps.includes(sym) ? `<${inputs}>` : `(${inputs})`;
+	};
+
+	let id = topBlockId;
+	while (id && !seen.has(id)) {
+		seen.add(id);
+		const block = blocksJSON[id];
+		if (!block) break;
+
+		switch (block.opcode) {
+			case "event_whenflagclicked":
+				lines.push("when flag clicked");
+				break;
+
+			case "looks_say": {
+				const msg = processInput(inputToText(block.inputs?.MESSAGE));
+				lines.push(`say ${msg}`);
+				break;
+			}
+
+			case "data_setvariableto": {
+				const varField = block.fields?.VARIABLE;
+				const varName = Array.isArray(varField)
+					? varField[0]
+					: String(varField ?? "");
+				const val = processInput(inputToText(block.inputs?.VALUE));
+				lines.push(`set [${varName} v] to ${val}`);
+				break;
+			}
+
+			default:
+				if (block.opcode && block.opcode.startsWith("operator_")) {
+					lines.push(operatorToText(id));
+				} else if (block.opcode) {
+					lines.push(block.opcode);
+				}
+				break;
+		}
+
+		id = block.next;
 	}
 
-	if (block.value) {
-		return renderNumber(
-			typeof blockId === "object" ? blockId : [4, block.value]
-		);
-	}
-
-	if (block.opcode.startsWith("operator_")) {
-		return renderOperator(blocks, block);
-	}
-
-	if (block.opcode.startsWith("data")) {
-		return renderDatablock(blocks, block);
-	}
-
-	if (block.opcode === "event_whenflagclicked") {
-		return renderHat("flag");
-	}
-
-	if (block.opcode === "looks_say") {
-		return renderSay(blocks, block);
-	}
-
-	return renderUnknown(block);
-}
-
-function renderHat(type) {
-	const div = document.createElement("div");
-	div.className = "block hat " + type;
-
-	switch (type) {
-		case "flag":
-			div.innerText = "\uf024";
-	}
-
-	return div;
-}
-
-function renderSay(ir, block) {
-	const div = document.createElement("div");
-	div.className = "block say";
-
-	const label = document.createElement("span");
-	label.textContent = "say";
-	div.appendChild(label);
-
-	const msgId = block.inputs.MESSAGE[1];
-	const input = document.createElement("span");
-	input.className = "input";
-	input.appendChild(renderBlock(ir, msgId));
-	div.appendChild(input);
-
-	return div;
-}
-
-function renderDatablock(ir, block) {
-	const div = document.createElement("div");
-	div.className = "block data";
-
-	const label = document.createElement("span");
-	label.textContent = "set";
-	div.appendChild(label);
-
-	const varName = document.createElement("span");
-	varName.className = "dropdown";
-	varName.textContent = block.fields.VARIABLE[0];
-	div.appendChild(varName);
-
-	const to = document.createElement("span");
-	to.textContent = "to";
-	div.appendChild(to);
-
-	const msgId = block.inputs.VALUE[1];
-	const input = document.createElement("span");
-	input.className = "input";
-	input.appendChild(renderBlock(ir, msgId));
-	div.appendChild(input);
-
-	return div;
-}
-
-function operatorLabel(opcode) {
-	switch (opcode) {
-		case "operator_add":
-			return "+";
-		case "operator_subtract":
-			return "-";
-		case "operator_multiply":
-			return "*";
-		case "operator_divide":
-			return "/";
-		case "operator_lt":
-			return "<";
-		case "operator_gt":
-			return ">";
-		case "operator_equals":
-			return "=";
-		case "operator_and":
-			return "and";
-		case "operator_or":
-			return "or";
-		default:
-			return opcode;
-	}
-}
-
-function renderNumber(block) {
-	const span = document.createElement("span");
-	span.className = "block " + (block[0] !== 12 ? "number" : "var");
-	span.textContent = block[1];
-	return span;
-}
-
-function renderOperator(ir, block) {
-	const div = document.createElement("div");
-	div.className = "block operator";
-
-	const leftId = block.inputs?.NUM1?.[1] ?? block.inputs?.OPERAND1?.[1];
-	const rightId = block.inputs?.NUM2?.[1] ?? block.inputs?.OPERAND2?.[1];
-
-	const left = document.createElement("span");
-	left.className = "input";
-	left.appendChild(renderBlock(ir, leftId));
-
-	const label = document.createElement("span");
-	label.textContent = operatorLabel(block.opcode);
-
-	if (logicalOps.includes(label.textContent)) div.classList.add("logical");
-
-	const right = document.createElement("span");
-	right.className = "input";
-	right.appendChild(renderBlock(ir, rightId));
-
-	div.append(left, label, right);
-	return div;
-}
-
-function renderUnknown(block) {
-	const div = document.createElement("div");
-	div.className = "block unknown";
-	div.textContent = block.opcode;
-	return div;
+	return lines.join("\n");
 }
