@@ -289,7 +289,6 @@ button i {
 	padding: 8px;
 	display: flex;
 	align-items: center;
-	justify-content: center;
 	overflow-x: scroll;
 	-webkit-scrollbar-width: none;
 	scrollbar-width: none;
