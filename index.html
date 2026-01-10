@@ -16,7 +16,6 @@
 		/>
 		<link rel="stylesheet" href="style.css" />
 		<link rel="stylesheet" href="prism.css" />
-		<link rel="stylesheet" href="blocks.css" />
 	</head>
 	<body>
 		<nav>
@@ -67,7 +66,7 @@
 		</div>
 		<div class="container" id="workspace">
 			<div id="workspace-top">
-				<p>Preview</p>
+				<p>Preview Blocks</p>
 				<button
 					type="button"
 					id="btn-export"
@@ -151,8 +150,9 @@
 			removeTrailingBr();
 		</script>
 
+		<script src="https://cdn.jsdelivr.net/npm/scratchblocks@latest/build/scratchblocks.min.js"></script>
 		<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
 		<script src="scripts/main.js" type="module"></script>
-		<script src="scripts/scratchExport.js"></script>
+		<script src="scripts/scratchExport.js" type="module"></script>
 	</body>
 </html>
